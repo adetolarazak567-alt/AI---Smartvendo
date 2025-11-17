@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Business Ideas Generator</title>
+
+<style>
+body{
+  font-family:Poppins,system-ui;
+  background:#f5f9ff;
+  padding:2rem;
+  text-align:center;
+}
+.box{
+  max-width:900px;
+  margin:auto;
+  background:#fff;
+  padding:1.5rem;
+  border-radius:12px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.08);
+}
+input,select,textarea{
+  width:95%;
+  padding:10px;
+  margin:8px 0;
+  border-radius:8px;
+  border:1px solid #ddd;
+}
+button{
+  padding:10px 16px;
+  border:none;
+  border-radius:8px;
+  background:#007bff;
+  color:#fff;
+  cursor:pointer;
+}
+#clear{background:#ff4d4d;margin-left:10px}
+</style>
+</head>
+
+<body>
+
+<h2>Business Ideas Generator</h2>
+
+<div class="box">
+
+  <input id="industry" placeholder="Industry (e.g. 'Fashion', 'Tech', 'Food')" />
+
+  <input id="budget" placeholder="Budget (e.g. 'Low budget', '$100', 'No capital')" />
+
+  <select id="type">
+    <option value="online">Online Business</option>
+    <option value="offline">Offline Business</option>
+    <option value="mixed">Online + Offline</option>
+    <option value="sidehustle">Side Hustle</option>
+  </select>
+
+  <button id="go">Generate Ideas</button>
+  <button id="clear">Clear</button>
+
+  <div id="out" style="white-space:pre-wrap;background:#fff;padding:1rem;border-radius:8px;margin-top:1rem;text-align:left"></div>
+</div>
+
+<script>
+go.onclick = async () => {
+
+  const industry = industry.value.trim();
+  const budget = budget.value.trim();
+  const type = type.value;
+
+  if(!industry){
+    alert("Enter an industry");
+    return;
+  }
+
+  out.textContent = "⏳ Generating business ideas...";
+
+  try {
+    const res = await fetch("https://ai-smartvendo.onrender.com/generate/business", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ industry, budget, type })
+    });
+
+    const data = await res.json();
+    out.textContent = data.business || data.error || "No output";
+  } catch(err){
+    out.textContent = "Error: " + err.message;
+  }
+};
+
+clear.onclick = () => out.textContent = "";
+</script>
+
+</body>
+</html>
