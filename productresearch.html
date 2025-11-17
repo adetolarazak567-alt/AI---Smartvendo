@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Product Research Finder</title>
+<style>
+body {font-family:Poppins,system-ui;background:#f5f9ff;padding:2rem;text-align:center;}
+input {
+  width:90%;padding:12px;border-radius:10px;margin:10px 0;border:1px solid #ccc;
+}
+button {
+  background:#ff8c00;color:#fff;padding:12px 20px;border:none;
+  border-radius:10px;cursor:pointer;width:200px;margin:10px;
+}
+#out {
+  white-space:pre-wrap;background:#fff;padding:1rem;border-radius:12px;
+  max-width:900px;margin:1rem auto;text-align:left;
+  box-shadow:0 4px 12px rgba(0,0,0,.05);
+}
+</style>
+</head>
+
+<body>
+<h2>AI Product Research Finder</h2>
+
+<input id="niche" placeholder="Market niche (e.g. 'Pet accessories')" />
+
+<button id="go">Find Products</button>
+<button id="clear" style="background:#444">Clear</button>
+
+<div id="out"></div>
+
+<script>
+document.getElementById("go").onclick = async () => {
+  const niche = document.getElementById("niche").value.trim();
+  if(!niche){ alert("Enter a niche"); return; }
+
+  document.getElementById("out").textContent = "⏳ Finding hot products...";
+
+  try {
+    const res = await fetch("https://ai-smartvendo.onrender.com/generate/business", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ niche })
+    });
+    const data = await res.json();
+    document.getElementById("out").textContent = data.ideas || data.error;
+  } catch(e){
+    document.getElementById("out").textContent = "Error: "+e.message;
+  }
+};
+
+document.getElementById("clear").onclick = () => {
+  document.getElementById("niche").value = "";
+  document.getElementById("out").textContent = "";
+};
+</script>
+</body>
+</html>
