@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Sales Funnel Generator</title>
+<style>
+  body {font-family:Poppins,system-ui;background:#f5f9ff;padding:2rem;text-align:center}
+  input {width:90%;padding:10px;margin:6px;border-radius:8px}
+  button {padding:10px 20px;background:#007bff;color:white;border:none;border-radius:8px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<h2>Sales Funnel Generator</h2>
+
+<input id="product" placeholder="Enter your product">
+<input id="audience" placeholder="Enter target audience (optional)">
+
+<button id="go">Generate Funnel</button>
+
+<div id="out" style="white-space:pre-wrap;background:#fff;padding:1rem;border-radius:8px;max-width:900px;margin:1rem auto"></div>
+
+<script>
+go.onclick = async () => {
+  if (!product.value.trim()) return alert("Enter product");
+
+  out.textContent = "⏳ Generating...";
+
+  const res = await fetch("https://ai-smartvendo.onrender.com/generate/funnel", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      product: product.value.trim(),
+      audience: audience.value.trim()
+    })
+  });
+
+  const data = await res.json();
+  out.textContent = data.funnel || data.error;
+};
+</script>
+
+</body>
+</html>
