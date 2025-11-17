@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Freelance Proposal Generator</title>
+<style>
+body{font-family:Poppins,system-ui;background:#f5f9ff;padding:2rem;text-align:center}
+.box{max-width:900px;margin:auto;background:#fff;padding:1.5rem;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.08)}
+input,textarea{width:95%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #ddd}
+button{padding:10px;border:none;border-radius:8px;background:#007bff;color:#fff;cursor:pointer}
+#clear{background:#ff4d4d;margin-left:10px}
+</style>
+</head>
+<body>
+
+<h2>Freelance Proposal Generator</h2>
+
+<div class="box">
+  <input id="job" placeholder="Job description (paste Upwork/Fiverr job)"/>
+  <input id="skills" placeholder="Your skills (e.g. 'Web design, SEO, UI/UX')"/>
+  <button id="go">Generate Proposal</button>
+  <button id="clear">Clear</button>
+
+  <div id="out" style="white-space:pre-wrap;margin-top:1rem;text-align:left"></div>
+</div>
+
+<script>
+go.onclick = async () => {
+  if(!job.value.trim()){alert("Enter job description");return;}
+
+  out.textContent = "⏳ Generating…";
+
+  const res = await fetch("https://ai-smartvendo.onrender.com/generate/proposal",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      job: job.value.trim(),
+      skills: skills.value.trim()
+    })
+  });
+  const data = await res.json();
+  out.textContent = data.proposal || data.error || "No output";
+};
+clear.onclick = () => out.textContent = "";
+</script>
+
+</body>
+</html>
