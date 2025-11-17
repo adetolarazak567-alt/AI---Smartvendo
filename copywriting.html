@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Copywriting Generator</title>
+<style>
+body{font-family:Poppins,system-ui;background:#f5f9ff;padding:2rem;text-align:center}
+.box{max-width:900px;margin:auto;background:#fff;padding:1.5rem;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.08)}
+input,textarea,select{width:95%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #ddd}
+button{padding:10px 18px;border:none;border-radius:8px;background:#007bff;color:#fff;cursor:pointer}
+#clear{background:#ff4d4d;margin-left:10px}
+</style>
+</head>
+<body>
+
+<h2>Copywriting Generator</h2>
+
+<div class="box">
+  <input id="product" placeholder="Product or service (e.g. 'Wireless Earbuds')"/>
+  <input id="tone" placeholder="Tone (e.g. 'professional, funny, luxury')"/>
+
+  <button id="go">Generate Copy</button>
+  <button id="clear">Clear</button>
+
+  <div id="out" style="white-space:pre-wrap;margin-top:1rem;text-align:left"></div>
+</div>
+
+<script>
+document.getElementById("go").onclick = async () => {
+  const product = product.value.trim();
+  const tone = tone.value.trim();
+  if(!product){alert("Enter product");return;}
+
+  out.textContent = "⏳ Generating…";
+
+  const res = await fetch("https://ai-smartvendo.onrender.com/generate/copywriting",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({ product, tone })
+  });
+  const data = await res.json();
+  out.textContent = data.copy || data.error || "No output";
+};
+document.getElementById("clear").onclick = () => out.textContent = "";
+</script>
+
+</body>
+</html>
