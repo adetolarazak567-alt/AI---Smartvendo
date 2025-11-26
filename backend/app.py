@@ -1,4 +1,3 @@
-# app.py
 import os
 from flask import Flask, request, jsonify
 import requests
@@ -11,195 +10,140 @@ OPENROUTER_KEY = os.environ.get("OPENROUTER_KEY")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 if not OPENROUTER_KEY:
-    app.logger.warning("OPENROUTER_KEY not set. Set it in environment before production.")
+    print("WARNING: Missing OPENROUTER_KEY environment variable!")
 
-def call_ai(prompt, model="gpt-3.5-turbo", max_tokens=900):
+def generate_response(prompt):
     headers = {
         "Authorization": f"Bearer {OPENROUTER_KEY}",
         "Content-Type": "application/json"
     }
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": "You are a concise, professional assistant that produces content optimized for the user's request."},
-            {"role": "user", "content": prompt}
-        ],
-        "max_tokens": max_tokens
-    }
-    resp = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=60)
-    resp.raise_for_status()
-    data = resp.json()
-    return data.get("choices", [{}])[0].get("message", {}).get("content") or data.get("result") or ""
 
-# -------------------------
-# Existing endpoints (copywriting, freelance, resume, business, social)
-# -------------------------
-@app.route("/generate/copywriting", methods=["POST"])
-def generate_copywriting():
-    body = request.json or {}
-    product = body.get("product") or body.get("topic")
-    tone = body.get("tone", "persuasive and professional")
-    length = body.get("length", "short")
-    if not product:
-        return jsonify({"error":"No product/topic provided"}), 400
-    prompt = (
-        f"Create {length} marketing copy for: {product}\n"
-        f"Tone: {tone}\n\n"
-        "Include:\n- 3 headline options\n- 2 short ad captions (max 120 chars)\n- 1 longer product description (3-4 sentences)\n- Suggested CTA (one line)"
-    )
+    data = {
+        "model": "google/gemini-2.0-flash-001",
+        "messages": [{"role": "user", "content": prompt}]
+    }
+
     try:
-        out = call_ai(prompt)
-        return jsonify({"copy": out})
+        response = requests.post(OPENROUTER_URL, headers=headers, json=data)
+        print("Status Code:", response.status_code)
+        print("Response Body:", response.text)
+
+        if response.status_code == 200:
+            json_response = response.json()
+            ai_message = json_response["choices"][0]["message"]["content"]
+            return {"reply": ai_message, "status": "success"}
+        else:
+            return {
+                "reply": f"Error from OpenRouter: {response.status_code}",
+                "status": "error",
+                "details": response.text
+            }
+
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print("Exception:", str(e))
+        return {"reply": f"Request failed: {str(e)}", "status": "error"}
+
+
+# -------------------------------
+# 14 VENDING MACHINE ENDPOINTS
+# -------------------------------
+
+@app.route("/generate/copywriting", methods=["POST"])
+def copywriting():
+    text = request.json.get("text", "")
+    return jsonify(generate_response(f"Write high-converting marketing copy:\n{text}"))
 
 @app.route("/generate/freelance", methods=["POST"])
-def generate_freelance():
-    body = request.json or {}
-    platform = body.get("platform", "Upwork/Fiverr")
-    gig = body.get("gig") or body.get("service")
-    brief = body.get("brief", "")
-    if not gig:
-        return jsonify({"error":"No gig/service provided"}), 400
-    prompt = (
-        f"Write an optimized freelance proposal for {platform} for this service: {gig}\n"
-        f"Include a 1-sentence hook, a 3-paragraph proposal (short), and 3 bullet points of portfolio/examples. "
-        f"User brief: {brief}"
-    )
-    try:
-        out = call_ai(prompt)
-        return jsonify({"proposal": out})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+def freelance():
+    text = request.json.get("text", "")
+    return jsonify(generate_response(f"Write a professional freelance cover letter:\n{text}"))
 
 @app.route("/generate/resume", methods=["POST"])
-def generate_resume():
-    body = request.json or {}
-    info = body.get("info")
-    role = body.get("target_role", "")
-    if not info:
-        return jsonify({"error":"No user info provided"}), 400
-    prompt = (
-        f"Using the following user info, produce a professional resume summary (3-5 bullet achievements), "
-        f"a tailored work-experience bullet list for a target role: {role} (if provided), and a short LinkedIn headline + summary.\n\n"
-        f"User info:\n{info}\n\nFormat clearly with headings: SUMMARY, EXPERIENCE HIGHLIGHTS, LINKEDIN HEADLINE, LINKEDIN SUMMARY."
-    )
-    try:
-        out = call_ai(prompt)
-        return jsonify({"resume": out})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+def resume():
+    text = request.json.get("text", "")
+    return jsonify(generate_response(f"Create a professional resume summary:\n{text}"))
 
 @app.route("/generate/business", methods=["POST"])
-def generate_business():
-    body = request.json or {}
-    niche = body.get("niche") or body.get("topic")
-    if not niche:
-        return jsonify({"error":"No niche/topic provided"}), 400
-    prompt = (
-        f"Generate 10 business or side-hustle ideas for the niche: {niche}. "
-        "For each idea give: a one-line description, target customer, three monetization channels, and a 3-step launch plan."
-    )
-    try:
-        out = call_ai(prompt, max_tokens=1200)
-        return jsonify({"ideas": out})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+def business():
+    text = request.json.get("text", "")
+    return jsonify(generate_response(f"Generate a business plan:\n{text}"))
 
 @app.route("/generate/social", methods=["POST"])
-def generate_social():
-    body = request.json or {}
-    platform = body.get("platform", "instagram")
-    topic = body.get("topic")
-    tone = body.get("tone", "engaging")
-    if not topic:
-        return jsonify({"error":"No topic provided"}), 400
-    prompt = (
-        f"For {platform}, create: 5 post caption ideas (short), 10 relevant hashtags, 3 short story prompts, "
-        f"and a weekly posting schedule (3 posts/week) for the topic: {topic}. Tone: {tone}."
-    )
-    try:
-        out = call_ai(prompt)
-        return jsonify({"social": out})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+def social():
+    text = request.json.get("text", "")
+    return jsonify(generate_response(f"Write viral social media content:\n{text}"))
 
-# -------------------------
-# NEW HIGH-VALUE endpoints
-# -------------------------
-
-# YouTube script generator (new)
 @app.route("/generate/youtube", methods=["POST"])
-def generate_youtube_script():
-    body = request.json or {}
-    topic = body.get("topic")
-    style = body.get("style", "storytelling")
-    duration = body.get("duration", "5 minutes")
-    if not topic:
-        return jsonify({"error":"No topic provided"}), 400
-    prompt = (
-        f"Create a full YouTube script for this topic: {topic}\n"
-        f"Video length: {duration}\n"
-        f"Script style: {style}\n\n"
-        "Include:\n- Hook (2–3 lines)\n- Intro\n- Sections with timestamps\n- Narration style lines\n- Natural YouTuber language\n- CTA at the end"
-    )
-    try:
-        out = call_ai(prompt, max_tokens=1400)
-        return jsonify({"script": out})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+def youtube():
+    text = request.json.get("text", "")
+    return jsonify(generate_response(f"Write a long YouTube script:\n{text}"))
 
-# Sales funnel generator
+@app.route("/generate/Youtube", methods=["POST"])
+def YoutubeIdeas():
+    text = request.json.get("text", "")
+    return jsonify(generate_response(f"Generate multiple YouTube video ideas:\n{text}"))
+
+@app.route("/generate/facebook", methods=["POST"])
+def facebook():
+    text = request.json.get("text", "")
+    return jsonify(generate_response(f"Write Facebook post content:\n{text}"))
+
+@app.route("/generate/tiktok", methods=["POST"])
+def tiktok():
+    text = request.json.get("text", "")
+    return jsonify(generate_response(f"Write viral TikTok video ideas:\n{text}"))
+
+@app.route("/generate/ebook", methods=["POST"])
+def ebook():
+    text = request.json.get("text", "")
+    return jsonify(generate_response(f"Write an ebook chapter:\n{text}"))
+
+@app.route("/generate/branding", methods=["POST"])
+def branding():
+    text = request.json.get("text", "")
+    return jsonify(generate_response(f"Create brand identity ideas:\n{text}"))
+
+@app.route("/generate/productresearch", methods=["POST"])
+def productresearch():
+    text = request.json.get("text", "")
+    return jsonify(generate_response(f"Find winning product research ideas:\n{text}"))
+
 @app.route("/generate/funnel", methods=["POST"])
-def generate_funnel():
-    body = request.json or {}
-    product = body.get("product")
-    audience = body.get("audience", "general customers")
-    if not product:
-        return jsonify({"error":"No product provided"}), 400
-    prompt = (
-        f"Generate a full sales funnel for this product: {product}\n"
-        f"Target audience: {audience}\n\n"
-        "Include:\n- Awareness copy\n- Lead magnet idea\n- Email sequence (3 emails)\n- Landing page copy\n- Objection breakers\n- Final CTA"
-    )
-    try:
-        out = call_ai(prompt, max_tokens=1500)
-        return jsonify({"funnel": out})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+def funnel():
+    text = request.json.get("text", "")
+    return jsonify(generate_response(f"Write sales funnel copy:\n{text}"))
 
-# Ad creative generator
 @app.route("/generate/adcreative", methods=["POST"])
-def generate_adcreative():
-    body = request.json or {}
-    product = body.get("product")
-    platform = body.get("platform", "facebook ads")
-    if not product:
-        return jsonify({"error":"No product provided"}), 400
-    prompt = (
-        f"Create ad creatives for {platform}.\n"
-        f"Product: {product}\n\n"
-        "Include:\n- 3 headline options\n- 3 primary text variations (ad captions)\n- 3 CTA lines\n- 3 attention-grabbing hooks\n- A short script for video ads (15–30 secs)"
-    )
-    try:
-        out = call_ai(prompt)
-        return jsonify({"ads": out})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+def adcreative():
+    text = request.json.get("text", "")
+    return jsonify(generate_response(f"Write high converting ad creative:\n{text}"))
 
-# -------------------------
-# Health check
-# -------------------------
+# -------------------------------
+# HEALTH CHECK
+# -------------------------------
+
 @app.route("/ping", methods=["GET"])
 def ping():
     return jsonify({
-        "status":"ok",
-        "services": [
-            "copywriting","freelance","resume","business","social",
-            "youtube","facebook","tiktok","ebook","branding","product_research",
-            "funnel","adcreative","youtube_script"
+        "status": "online",
+        "vending_machines": [
+            "copywriting",
+            "freelance",
+            "resume",
+            "business",
+            "social",
+            "youtube",
+            "Youtube",
+            "facebook",
+            "tiktok",
+            "ebook",
+            "branding",
+            "productresearch",
+            "funnel",
+            "adcreative"
         ]
     })
 
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(host="0.0.0.0", port=10000)
