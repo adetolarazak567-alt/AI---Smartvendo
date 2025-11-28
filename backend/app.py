@@ -32,7 +32,7 @@ def call_ai(prompt, model="gpt-3.5-turbo", max_tokens=900):
     return data.get("choices", [{}])[0].get("message", {}).get("content") or data.get("result") or ""
 
 # -------------------------
-# Existing endpoints (copywriting, freelance, resume, business, social)
+# EXISTING ENDPOINTS
 # -------------------------
 @app.route("/generate/copywriting", methods=["POST"])
 def generate_copywriting():
@@ -125,18 +125,92 @@ def generate_social():
         return jsonify({"error": str(e)}), 500
 
 # -------------------------
-# NEW HIGH-VALUE endpoints
+# NEW HIGH-VALUE ENDPOINTS
 # -------------------------
 
-# YouTube script generator (new)
-@app.route("/generate/Youtube", methods=["POST"])
-def generate_Youtube_script():
+@app.route("/generate/productresearch", methods=["POST"])
+def generate_product_research():
+    body = request.json or {}
+    niche = body.get("topic")
+    if not niche:
+        return jsonify({"error": "No niche/topic provided"}), 400
+    prompt = (
+        f"Perform AI product research for the niche: {niche}.\n"
+        "Provide 10 product ideas with:\n- One-line description\n- Target customer\n- Selling points\n- Suggested marketing channels"
+    )
+    try:
+        out = call_ai(prompt, max_tokens=1200)
+        return jsonify({"ideas": out})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/generate/branding", methods=["POST"])
+def generate_branding():
+    body = request.json or {}
+    text = body.get("text")
+    if not text:
+        return jsonify({"error": "No branding prompt provided"}), 400
+    prompt = f"Generate premium branding and logo concepts:\n{text}"
+    try:
+        out = call_ai(prompt, max_tokens=900)
+        return jsonify({"reply": out})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/generate/ebook", methods=["POST"])
+def generate_ebook():
+    body = request.json or {}
+    text = body.get("text")
+    if not text:
+        return jsonify({"error": "No ebook prompt provided"}), 400
+    prompt = f"Create an e-book based on the following request:\n{text}"
+    try:
+        out = call_ai(prompt, max_tokens=2000)
+        return jsonify({"reply": out})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/generate/tiktok", methods=["POST"])
+def generate_tiktok():
+    body = request.json or {}
+    topic = body.get("topic")
+    if not topic:
+        return jsonify({"error": "No topic provided"}), 400
+    prompt = (
+        f"Create 5 TikTok viral script ideas for the topic: {topic}.\n"
+        "Include hooks, short dialogues, trends, and CTA lines."
+    )
+    try:
+        out = call_ai(prompt, max_tokens=900)
+        return jsonify({"social": out})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/generate/facebook", methods=["POST"])
+def generate_facebook():
+    body = request.json or {}
+    topic = body.get("topic")
+    if not topic:
+        return jsonify({"error": "No topic provided"}), 400
+    prompt = (
+        f"Create 5 Facebook marketing content ideas for the niche: {topic}.\n"
+        "Include short post captions, ad copy, CTA lines, and post hooks."
+    )
+    try:
+        out = call_ai(prompt, max_tokens=900)
+        return jsonify({"social": out})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# lowercase youtube for Growth Kit
+@app.route("/generate/youtube", methods=["POST"])
+def generate_youtube_lowercase():
     body = request.json or {}
     topic = body.get("topic")
     style = body.get("style", "storytelling")
     duration = body.get("duration", "5 minutes")
     if not topic:
-        return jsonify({"error":"No topic provided"}), 400
+        return jsonify({"error": "No topic provided"}), 400
     prompt = (
         f"Create a full YouTube script for this topic: {topic}\n"
         f"Video length: {duration}\n"
@@ -188,16 +262,16 @@ def generate_adcreative():
         return jsonify({"error": str(e)}), 500
 
 # -------------------------
-# Health check
+# HEALTH CHECK
 # -------------------------
 @app.route("/ping", methods=["GET"])
 def ping():
     return jsonify({
-        "status":"ok",
+        "status": "ok",
         "services": [
             "copywriting","freelance","resume","business","social",
-            "youtube","facebook","tiktok","ebook","branding","product_research",
-            "funnel","adcreative","Youtube_script"
+            "youtube","youtube_lowercase","facebook","tiktok","ebook",
+            "branding","product_research","funnel","adcreative","Youtube_script"
         ]
     })
 
